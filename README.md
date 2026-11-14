@@ -17,6 +17,8 @@ Case study: Indonesia, whose fires sent haze across Malaysia and Singapore in Oc
 <img width="1600" height="814" alt="image" src="https://github.com/user-attachments/assets/76428602-53b2-43d7-be65-6e7b2b17b01f" />
  
 *The app for Indonesia: the 2026 fire season ranks third since 2003, and every month since 2003 sits on one harmonized scale.*
+
+
  
 [Line chart: gluing raw MODIS and VIIRS counts makes every year since 2012 look about 5× higher, while the PyroSync harmonized record stays continuous]
 <img width="1335" height="543" alt="image" src="https://github.com/user-attachments/assets/525779c7-fd8b-48d6-938e-348df4a75c2e" />
