@@ -32,6 +32,49 @@ Case study: Indonesia, whose fires sent haze across Malaysia and Singapore in Oc
 6. **Calendar**: Aqua before 2021, harmonized VIIRS from 2021.
 7. **Validation**: fit on 2012-2017, score on 2018-2020 against real Aqua.
 
+## Results (Indonesia, NASA FIRMS data through 2026-11-14)
+
+Live app: https://pyrosync.streamlit.app
+
+**Why harmonization is needed.** Over 2012–2020, VIIRS S-NPP reported 5.1× as many
+detections as MODIS (Terra + Aqua) for the same area. Gluing the raw FIRMS records
+together therefore makes every year since 2012 look about five times more fiery.
+
+**Validation.** Fitted on 2012–2017, scored on monthly totals for 2018–2020 against real
+MODIS Aqua fire cell-days (data the model never saw):
+
+| Method | Monthly error (MAPE) | Correlation (r) | Total bias |
+| --- | --- | --- | --- |
+| Raw VIIRS detections | 700.0% | 0.997 | +701.3% |
+| Raw VIIRS fire cell-days | 501.2% | 0.994 | +429.2% |
+| **Layer A: ratio (default)** | **18.9%** | 0.991 | **+0.7%** |
+| Layer B: machine learning | 23.0% | 0.994 | +0.8% |
+
+The machine-learning model was not better than the simple ratio, so the app uses the
+transparent ratio by default and offers the model as a check.
+
+**Checking our own pipeline.** A first static-source filter removed 13.4% of all
+detections. `scripts/check_static.py` showed that the removed "vegetation fire"
+detections were as seasonal as real fires (65% in Aug–Oct vs. 69% overall), so the filter
+was deleting real fires near industrial sites. The revised filter removes about 7%, and
+the calibration bias fell from +4.5% to +0.7%.
+
+**Case study: was 2026 Indonesia's worst fire season?** Total harmonized fire cell-days in
+August–October:
+
+| Year | Aug–Oct fire cell-days |
+| --- | --- |
+| 2015 | 73,440 |
+| 2006 | 70,391 |
+| **2026** | **53,697** (range 46,771–58,307) |
+| 2004 | 52,630 |
+| 2009 | 42,214 |
+| 2019 | 38,358 |
+
+2026 is the worst season since 2015 and third since 2003, behind 2015 and 2006; its
+uncertainty range overlaps 2004. October 2026 alone was 3.8× the historical median for
+October. A naive splice of raw counts would have called 2026 a record.
+
 ## Run it
 
 ```bash
