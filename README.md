@@ -13,8 +13,8 @@ Case study: Indonesia, whose fires sent haze across Malaysia and Singapore in Oc
 
 **Live app:** https://pyrosync.streamlit.app
 
-![PyroSync web app: area selector, a headline ranking the 2026 fire season, four summary numbers and the burning calendar for Indonesia](<img width="1600" height="814" alt="image" src="https://github.com/user-attachments/assets/76428602-53b2-43d7-be65-6e7b2b17b01f" />
-)
+![PyroSync web app: area selector, a headline ranking the 2026 fire season, four summary numbers and the burning calendar for Indonesia]
+(<img width="1600" height="814" alt="image" src="https://github.com/user-attachments/assets/76428602-53b2-43d7-be65-6e7b2b17b01f" />)
  
 *The app for Indonesia: the 2026 fire season ranks third since 2003, and every month since 2003 sits on one harmonized scale.*
  
