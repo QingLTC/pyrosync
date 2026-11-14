@@ -225,8 +225,13 @@ with tab_map:
     else:
         scatter = getattr(px, "scatter_map", None) or px.scatter_mapbox
         kw = {} if scatter is getattr(px, "scatter_map", None) else {"mapbox_style": "carto-positron"}
+        # Centre and zoom on the selected area, not on (0, 0).
+        lon0, lon1, lat0, lat1 = bbox
+        span = max(lon1 - lon0, (lat1 - lat0) * 1.6, 0.5)
+        zoom = float(np.clip(np.log2(360 / span) - 0.4, 2, 9))
         fig = scatter(cells, lat="lat", lon="lon", color=col, size=col, size_max=12,
-                      color_continuous_scale="cividis", zoom=4, height=560,
+                      color_continuous_scale="cividis", height=560,
+                      center={"lat": (lat0 + lat1) / 2, "lon": (lon0 + lon1) / 2}, zoom=zoom,
                       labels={col: "Fire cell-days"}, **kw)
         fig.update_layout(margin=dict(l=0, r=0, t=0, b=0))
         st.plotly_chart(fig, width="stretch")
