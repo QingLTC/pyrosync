@@ -72,14 +72,33 @@ def load_firms_csv(path: str) -> pd.DataFrame:
     return out.loc[keep, STD_COLS].reset_index(drop=True)
 
 
-def load_raw_dir(raw_dir: str = C.RAW_DIR) -> pd.DataFrame:
+def cell_key(df: pd.DataFrame) -> pd.Series:
+    """One integer per ~1 km (CELL_FINE) cell."""
+    ix = np.floor(df["lon"] / C.CELL_FINE).astype("int64")
+    iy = np.floor(df["lat"] / C.CELL_FINE).astype("int64")
+    return ix * 100_000 + (iy + 50_000)
+
+
+def static_flag_counts(df: pd.DataFrame) -> pd.Series:
+    """Number of SP detections flagged type 1/2/3 in each cell."""
+    flagged = df["type"].isin([1, 2, 3])
+    return cell_key(df[flagged]).value_counts()
+
+
+def load_raw_dir(raw_dir: str = C.RAW_DIR, remove_static: bool = True,
+                 static_min_flags: int = C.STATIC_MIN_FLAGS) -> pd.DataFrame:
     """Load every CSV under raw_dir (sub-folders included) and clean it up.
 
     - Standard-processing (SP) rows win; NRT rows are kept only after the last SP date
       of the same sensor (FIRMS replaces NRT with SP after ~5 months).
-    - Static heat sources: cells where SP data ever flagged type 1/2/3 (volcano, other
-      static land source, offshore) are removed from all rows, NRT included, because
-      NRT files carry no type column.
+    - Static heat sources, two rules:
+      (a) drop every detection FIRMS flagged as type 1/2/3 (volcano, other static land
+          source, offshore) in SP data;
+      (b) a ~1 km cell with at least `static_min_flags` such flags is a persistent source
+          (volcano crater, smelter, gas flare): drop all its detections in every year,
+          NRT included, because NRT files carry no type column.
+      A low threshold for (b) deletes real fires next to industry (checked with
+      scripts/check_static.py: removed type-0 detections were as seasonal as all fires).
     """
     paths = sorted(glob.glob(os.path.join(raw_dir, "**", "*.csv"), recursive=True))
     if not paths:
@@ -100,15 +119,16 @@ def load_raw_dir(raw_dir: str = C.RAW_DIR) -> pd.DataFrame:
     df = df.drop_duplicates(subset=["sensor", "lat", "lon", "date", "daynight"])
 
     # Static heat sources
-    ix = np.floor(df["lon"] / C.CELL_FINE).astype("int64")
-    iy = np.floor(df["lat"] / C.CELL_FINE).astype("int64")
-    key = ix * 100_000 + (iy + 50_000)          # one integer per fine cell
-    static_keys = np.unique(key[df["type"].isin([1, 2, 3])])
-    if len(static_keys):
-        is_static = key.isin(static_keys)
-        print(f"  removed {int(is_static.sum()):,} detections in "
-              f"{len(static_keys):,} static-source cells")
-        df = df[~is_static]
+    if remove_static:
+        counts = static_flag_counts(df)
+        static_keys = counts[counts >= static_min_flags].index
+        is_static_cell = cell_key(df).isin(static_keys)
+        is_flagged = df["type"].isin([1, 2, 3])
+        drop = is_static_cell | is_flagged
+        print(f"  removed {int(drop.sum()):,} detections: {int(is_flagged.sum()):,} flagged "
+              f"type 1/2/3, plus {int((is_static_cell & ~is_flagged).sum()):,} in "
+              f"{len(static_keys):,} persistent static cells (>= {static_min_flags} flags)")
+        df = df[~drop]
 
     return df.reset_index(drop=True)
 

@@ -88,6 +88,23 @@ st.caption(
     f"{int(C.SWITCH_MONTH[:4]) - 1}, harmonized VIIRS from {C.SWITCH_MONTH}. "
     f"Data through {end.date()}. This measures detected burning activity, not burned area.")
 
+story = series.season_story(ms, end)
+if story:
+    mlab = f"{MONTHS[story['months'][0] - 1]}–{MONTHS[story['months'][-1] - 1]}"
+    head = (f"**{story['year']} fire season ({mlab}{', so far' if story['partial'] else ''}): "
+            f"{story['total']:,.0f} fire cell-days**, #{story['rank']} of {story['n_years']} "
+            f"since {C.CALENDAR_START_YEAR}")
+    if story["highest_since"]:
+        head += f", the highest since {story['highest_since']}."
+        if len(story["higher_years"]) <= 3:
+            head += f" Only {', '.join(map(str, story['higher_years']))} burned more."
+    else:
+        head += ", the highest in the record."
+    with st.container(border=True):
+        st.markdown(head)
+        st.caption(f"Range {story['lo']:,.0f} to {story['hi']:,.0f} from calibration uncertainty. "
+                   "Earlier years use MODIS Aqua; recent years use VIIRS converted to the same scale.")
+
 if an:
     sel = f"{calendar.month_name[cmp_month]} {cmp_year}"
     partial = (pd.Period(f"{cmp_year}-{cmp_month:02d}", "M") == end.to_period("M")) and month_is_partial
@@ -100,8 +117,39 @@ if an:
     m4.metric("Rank", f"#{an['rank']} of {an['n_years']}",
               help=f"Rank among all {calendar.month_name[cmp_month]}s since {C.CALENDAR_START_YEAR}")
 
-tab_cal, tab_trend, tab_season, tab_map, tab_method, tab_dl = st.tabs(
-    ["Calendar", "Long-term trend", "Season vs. normal", "Map", "Method & validation", "Download"])
+tab_cal, tab_why, tab_trend, tab_season, tab_map, tab_method, tab_dl = st.tabs(
+    ["Calendar", "Why harmonize?", "Long-term trend", "Season vs. normal", "Map",
+     "Method & validation", "Download"])
+
+# ---------------------------------------------------------------- why harmonize
+with tab_why:
+    nv, inflation = series.naive_vs_harmonized(ms)
+    nv = nv[(nv["year"] >= yr0) & (nv["year"] <= yr1)]
+    first_viirs = int(C.WIN_A[0][:4])
+    if np.isfinite(inflation):
+        st.markdown(f"#### Gluing raw FIRMS counts together makes every year since {first_viirs} "
+                    f"look about {inflation:.1f}× more fiery")
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(x=list(nv["year"]) + list(nv["year"])[::-1],
+                             y=list(nv["final_hi_idx"]) + list(nv["final_lo_idx"])[::-1],
+                             fill="toself", line=dict(width=0), fillcolor="rgba(0,114,178,0.18)",
+                             name="Calibration range", hoverinfo="skip"))
+    fig.add_trace(go.Scatter(x=nv["year"], y=nv["naive_idx"], mode="lines+markers",
+                             line=dict(color="#D55E00", dash="dash", width=2.5),
+                             name="Naive: raw MODIS detections, then raw VIIRS detections"))
+    fig.add_trace(go.Scatter(x=nv["year"], y=nv["final_idx"], mode="lines+markers",
+                             line=dict(color="#0072B2", width=3), name="PyroSync harmonized record"))
+    fig.add_hline(y=100, line_color="#BBBBBB", line_width=1)
+    fig.add_vline(x=first_viirs - 0.5, line_dash="dash", line_color="#999999",
+                  annotation_text="VIIRS joins", annotation_position="top")
+    fig.update_layout(height=480, yaxis_title=f"Index ({C.CALENDAR_START_YEAR}–{first_viirs - 1} average = 100)",
+                      legend=dict(orientation="h", y=-0.2), margin=dict(l=10, r=10, t=30, b=10))
+    st.plotly_chart(fig, width="stretch")
+    st.caption(f"Both records are scaled so their {C.CALENDAR_START_YEAR}–{first_viirs - 1} average is 100, "
+               "so only their shape is compared. The naive record jumps when VIIRS joins because VIIRS "
+               "sees smaller fires and splits one fire into several 375 m pixels. "
+               f"Over {C.WIN_A[0][:4]}–{C.WIN_A[1][:4]}, VIIRS S-NPP reported {inflation:.1f}× as many "
+               "detections as MODIS (Terra + Aqua) for the same area.")
 
 # ---------------------------------------------------------------- calendar
 with tab_cal:
@@ -193,7 +241,10 @@ raw counts jump when the record moves from MODIS to VIIRS.
 
 **Steps.**
 1. Keep good-quality vegetation-fire detections (MODIS confidence ≥ {C.MODIS_MIN_CONF}, VIIRS not
-   *low*; static heat sources such as gas flares removed).
+   *low*). Static heat sources are removed in two ways: detections FIRMS flags as volcano, static
+   land source or offshore, plus every detection in ~1 km cells flagged at least
+   {C.STATIC_MIN_FLAGS} times (volcano craters, smelters, gas flares), so recent near-real-time data,
+   which carries no flag, is treated like older data.
 2. Count **fire cell-days**: a ~1 km cell with ≥ 1 detection on a day, per sensor and day/night pass.
 3. **Layer A**: ratio of Aqua to S-NPP cell-days per region × calendar month × day/night, learned in
    {C.WIN_A[0]} to {C.WIN_A[1]}, when Aqua and S-NPP both flew at ~13:30 and before Aqua's orbit drift.

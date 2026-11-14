@@ -1,15 +1,15 @@
 {
   "data_end_date": "2026-11-14",
   "data_start_date": "2000-11-01",
-  "detections": 7232497,
+  "detections": 7778389,
   "detections_by_sensor": {
-    "MODIS_A": 953579,
-    "MODIS_T": 421002,
-    "VIIRS_N20": 1594740,
-    "VIIRS_N21": 912620,
-    "VIIRS_SNPP": 3350556
+    "MODIS_A": 989944,
+    "MODIS_T": 452742,
+    "VIIRS_N20": 1701211,
+    "VIIRS_N21": 962660,
+    "VIIRS_SNPP": 3671832
   },
-  "grid_rows": 689022,
+  "grid_rows": 705749,
   "settings": {
     "CELL_FINE": 0.01,
     "CELL_COARSE": 0.1,

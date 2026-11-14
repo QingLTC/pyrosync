@@ -13,8 +13,12 @@ Case study: Indonesia, whose fires sent haze across Malaysia and Singapore in Oc
 
 ## How it works
 
-1. **Clean**: keep vegetation-fire detections of good quality (MODIS confidence ≥ 30,
-   VIIRS not *low*); remove static heat sources such as gas flares.
+1. **Clean**: keep detections of good quality (MODIS confidence ≥ 30, VIIRS not *low*).
+   Remove static heat sources two ways: detections FIRMS flags as volcano / static land
+   source / offshore, plus all detections in ~1 km cells flagged ≥ 50 times (volcano
+   craters, smelters, gas flares), so near-real-time data without flags is treated the
+   same. `scripts/check_static.py` showed why the threshold matters: a 1-flag rule
+   deleted ~7 % of all detections that were as seasonal as real fires.
 2. **Common unit**: count *fire cell-days* (a ~1 km cell with at least one detection on a
    day), per sensor and day/night pass. This removes most of the "one fire = many VIIRS
    pixels" effect.

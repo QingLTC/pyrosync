@@ -9,6 +9,11 @@ CELL_COARSE = 0.1   # ~11 km: unit stored for the web app (area-of-interest quer
 MODIS_MIN_CONF = 30     # MODIS confidence is 0-100; below 30 = low confidence
 VIIRS_DROP_CONF = ("l",)  # VIIRS confidence l/n/h (or low/nominal/high); drop low
 LOW_FRP_MW = 10.0       # cell-days with total FRP under this count as "low-intensity"
+STATIC_MIN_FLAGS = 50   # a ~1 km cell is a persistent static source if SP data flagged
+                        # at least this many detections in it as type 1/2/3. Chosen with
+                        # scripts/check_static.py: at 1 flag, 65 % of the type-0 detections
+                        # removed fell in Aug-Oct (as seasonal as real fires, 69 %);
+                        # at 50 flags only 37 %.
 
 # --- Sensors ---------------------------------------------------------------
 # Internal sensor names used everywhere in the pipeline.
