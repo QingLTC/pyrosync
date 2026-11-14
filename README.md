@@ -11,6 +11,18 @@ and compare the current month with the historical median.
 
 Case study: Indonesia, whose fires sent haze across Malaysia and Singapore in October 2026.
 
+**Live app:** https://pyrosync.streamlit.app
+
+![PyroSync web app: area selector, a headline ranking the 2026 fire season, four summary numbers and the burning calendar for Indonesia](<img width="1600" height="814" alt="image" src="https://github.com/user-attachments/assets/76428602-53b2-43d7-be65-6e7b2b17b01f" />
+)
+ 
+*The app for Indonesia: the 2026 fire season ranks third since 2003, and every month since 2003 sits on one harmonized scale.*
+ 
+![Line chart: gluing raw MODIS and VIIRS counts makes every year since 2012 look about 5× higher, while the PyroSync harmonized record stays continuous](<img width="1335" height="543" alt="image" src="https://github.com/user-attachments/assets/525779c7-fd8b-48d6-938e-348df4a75c2e" />
+)
+ 
+*Why harmonize: a naive splice of raw FIRMS counts (orange) invents a jump when VIIRS joins in 2012; the harmonized record (blue) does not.*
+
 ## How it works
 
 1. **Clean**: keep detections of good quality (MODIS confidence ≥ 30, VIIRS not *low*).
@@ -104,6 +116,37 @@ Synthetic numbers are invented and are never used in results.
 | `scripts/build_dataset.py` | Runs the whole pipeline |
 | `app.py` | Streamlit web app |
 
+## Project Architecture
+
+```
+pyrosync/
+├── data/
+│   └── processed/             # Outputs the app loads
+│       ├── .gitkeep
+│       ├── factors_A.csv      # S-NPP → Aqua ratio factors with 5–95 % range
+│       ├── factors_B.csv      # NOAA-20 → S-NPP ratio factors
+│       ├── grid.parquet       # Harmonized monthly table on the ~11 km grid
+│       ├── meta.json          # Data end date, row counts, settings used
+│       ├── validation.csv     # Hold-out scores of each method
+│       └── validation_ts.csv  # Hold-out monthly series (Indonesia)
+├── pyrosync/                  # Core pipeline package
+│   ├── __init__.py
+│   ├── calibrate.py           # Layer A ratios, NOAA-20 → S-NPP chain, Layer B model, hold-out validation
+│   ├── config.py              # All settings: grids, calibration windows, regions, preset areas
+│   ├── grid.py                # Detections → ~1 km fire cell-days → monthly ~11 km grid
+│   ├── io.py                  # Reads FIRMS CSVs, quality filter, SP/NRT merge, static-source removal
+│   └── series.py              # Area queries, calendar, month vs. median, season ranking, naive splice
+├── scripts/
+│   ├── build_dataset.py       # Runs the whole pipeline: data/raw → data/processed
+│   ├── check_static.py        # Diagnostic used to choose the static heat-source threshold
+│   └── make_synthetic.py      # Fake FIRMS-format data for testing only (never used in results
+├── .gitignore                 # Keeps raw and synthetic data out of git
+├── LICENSE                    # MIT license
+├── README.md                  # Project documentation
+├── app.py                     # Streamlit web app: area picker, calendar, charts, map, downloads
+└── requirements.txt           # Python dependencies
+```
+
 ## Data
 
 - NASA FIRMS: https://www.earthdata.nasa.gov/data/tools/firms
@@ -134,3 +177,5 @@ This project used SI tools, as allowed by the NASA Space Apps rules:
 ## Libraries
 
 pandas, NumPy, scikit-learn, Streamlit, Plotly, PyArrow (all open source).
+
+
