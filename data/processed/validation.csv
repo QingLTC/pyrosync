@@ -1,0 +1,9 @@
+scope,method,MAPE_%,r,bias_%
+Indonesia,raw VIIRS detections,673.4,0.997,678.8
+Indonesia,raw VIIRS cell-days,484.3,0.994,424.2
+Indonesia,Layer A (ratio),19.3,0.991,4.5
+Indonesia,Layer B (ML),23.0,0.995,5.4
+by region,raw VIIRS detections,712.0,0.992,678.8
+by region,raw VIIRS cell-days,531.1,0.98,424.2
+by region,Layer A (ratio),31.2,0.991,4.5
+by region,Layer B (ML),30.4,0.995,5.4

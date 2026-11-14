@@ -1,8 +1,6 @@
-# Raw FIRMS downloads are large: keep them out of git
 data/raw/
 data/synthetic_raw/
 data/synthetic_processed/
 __pycache__/
 *.pyc
 .venv/
-.DS_Store
